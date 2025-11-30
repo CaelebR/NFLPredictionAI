@@ -45,7 +45,7 @@ Predict specific matchup:
 bashpython predict.py --season 2025 --home-team KC --away-team BUF
 Save predictions to CSV:
 bashpython predict.py --season 2025 --week 14 --output predictions/week14.csv
-Additional options:
+## Additional options:
 ## Playoff game
 python predict.py --season 2025 --home-team KC --away-team BUF --playoff
 
