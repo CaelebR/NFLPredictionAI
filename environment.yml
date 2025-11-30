@@ -16,5 +16,7 @@ dependencies:
   - pip
   - pip:
     - xgboost>=2.0.0
-    - nfl_data_py>=0.3.0
+    - nflreadpy>=0.1.0
+    - pyarrow>=10.0.0
     - shap>=0.42.0
+    - joblib>=1.3.0
