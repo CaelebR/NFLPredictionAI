@@ -115,7 +115,7 @@ class NFLEnsembleModel:
         self.ensemble.fit(X_scaled, y)
         
         self.is_fitted = True
-        print("✓ Model training complete!")
+        print("Model training complete!")
         
         return self
     
@@ -255,7 +255,7 @@ class NFLEnsembleModel:
             'random_state': self.random_state
         }, filepath)
         
-        print(f"✓ Model saved to {filepath}")
+        print(f"Model saved to {filepath}")
     
     @classmethod
     def load(cls, filepath='models/nfl_ensemble_model.pkl'):
@@ -278,129 +278,9 @@ class NFLEnsembleModel:
         model.feature_names = saved_data['feature_names']
         model.is_fitted = True
         
-        print(f"✓ Model loaded from {filepath}")
+        print(f"Model loaded from {filepath}")
         
         return model
-
-
-class StackingEnsemble:
-    """
-    Alternative ensemble approach using stacking.
-    Base models make predictions, then a meta-learner combines them.
-    """
-    
-    def __init__(self, random_state=42):
-        """Initialize stacking ensemble."""
-        self.random_state = random_state
-        self.scaler = StandardScaler()
-        self.feature_names = None
-        
-        # Base models
-        self.base_models = {
-            'rf': RandomForestClassifier(
-                n_estimators=200, max_depth=15, random_state=random_state, n_jobs=-1
-            ),
-            'xgb': XGBClassifier(
-                n_estimators=200, max_depth=6, random_state=random_state, n_jobs=-1
-            ),
-            'dt': DecisionTreeClassifier(
-                max_depth=10, random_state=random_state
-            ),
-            'lr': LogisticRegression(
-                max_iter=1000, random_state=random_state
-            )
-        }
-        
-        # Meta-learner (learns how to combine base model predictions)
-        self.meta_learner = LogisticRegression(random_state=random_state)
-        
-        self.is_fitted = False
-    
-    def fit(self, X, y, feature_names=None):
-        """
-        Train the stacking ensemble.
-        Uses cross-validation to generate meta-features.
-        """
-        from sklearn.model_selection import cross_val_predict
-        
-        # Store feature names
-        if feature_names is not None:
-            self.feature_names = feature_names
-        elif isinstance(X, pd.DataFrame):
-            self.feature_names = X.columns.tolist()
-        
-        # Convert to numpy
-        if isinstance(X, pd.DataFrame):
-            X = X.values
-        if isinstance(y, pd.Series):
-            y = y.values
-        
-        # Scale features
-        X_scaled = self.scaler.fit_transform(X)
-        
-        print("Training base models...")
-        
-        # Train base models and generate meta-features
-        meta_features = np.zeros((X_scaled.shape[0], len(self.base_models)))
-        
-        for idx, (name, model) in enumerate(self.base_models.items()):
-            print(f"  Training {name}...")
-            model.fit(X_scaled, y)
-            
-            # Get out-of-fold predictions for meta-learner
-            meta_features[:, idx] = cross_val_predict(
-                model, X_scaled, y, cv=5, method='predict_proba', n_jobs=-1
-            )[:, 1]
-        
-        print("Training meta-learner...")
-        self.meta_learner.fit(meta_features, y)
-        
-        self.is_fitted = True
-        print("✓ Stacking ensemble training complete!")
-        
-        return self
-    
-    def predict_proba(self, X):
-        """Predict probabilities using stacking."""
-        if not self.is_fitted:
-            raise ValueError("Model must be fitted first!")
-        
-        if isinstance(X, pd.DataFrame):
-            X = X.values
-        
-        X_scaled = self.scaler.transform(X)
-        
-        # Get base model predictions
-        meta_features = np.zeros((X_scaled.shape[0], len(self.base_models)))
-        for idx, model in enumerate(self.base_models.values()):
-            meta_features[:, idx] = model.predict_proba(X_scaled)[:, 1]
-        
-        # Meta-learner combines base predictions
-        return self.meta_learner.predict_proba(meta_features)
-    
-    def predict(self, X):
-        """Predict classes using stacking."""
-        return (self.predict_proba(X)[:, 1] >= 0.5).astype(int)
-
-
-# Utility function for quick model creation
-def create_default_model(model_type='voting', random_state=42):
-    """
-    Create a default ensemble model.
-    
-    Args:
-        model_type: 'voting' or 'stacking'
-        random_state: Random seed
-    
-    Returns:
-        NFLEnsembleModel or StackingEnsemble instance
-    """
-    if model_type == 'voting':
-        return NFLEnsembleModel(random_state=random_state)
-    elif model_type == 'stacking':
-        return StackingEnsemble(random_state=random_state)
-    else:
-        raise ValueError("model_type must be 'voting' or 'stacking'")
 
 
 if __name__ == "__main__":

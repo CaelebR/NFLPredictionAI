@@ -138,10 +138,6 @@ def load_data(seasons, use_cache=True):
     schedules = load_schedules(seasons, use_cache=use_cache)
     team_stats = load_team_stats(seasons, use_cache=use_cache)
 
-    missing_seasons = set(seasons) - set(team_stats["season"].unique())
-    if missing_seasons:
-        print(f"Warning: Missing team stats for seasons: {missing_seasons}")
-
     print(f"\nLoaded {len(schedules)} games and stats for {len(team_stats)} team-seasons")
     
     return schedules, team_stats

@@ -21,7 +21,6 @@ def get_team_stats(stats_df: pd.DataFrame, team: str, season: int) -> dict:
     team_data = stats_df[(stats_df['team'] == team) & (stats_df['season'] == season)]
     
     if team_data.empty:
-        print(f"Warning: No stats found for {team} in {season}")
         return {}
     
     return team_data.iloc[0].to_dict()
@@ -158,16 +157,8 @@ def create_feature_dataframe(games_df: pd.DataFrame, stats_df: pd.DataFrame):
 
         feature_rows.append(row)
 
-    if skipped_games > 0:
-        print(f"Warning: Skipped {skipped_games} games due to missing team stats")
 
     df = pd.DataFrame(feature_rows)
-    
-    print(f"\nFeature Engineering Summary:")
-    print(f"  Total games processed: {len(df)}")
-    print(f"  Games with labels: {df['home_win'].notna().sum()}")
-    print(f"  Games without labels (future): {df['home_win'].isna().sum()}")
-    print(f"  Feature columns: {len([col for col in df.columns if col not in ['game_id', 'home_team', 'away_team', 'home_win']])}")
     
     return df
 
