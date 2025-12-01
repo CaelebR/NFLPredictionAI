@@ -1,7 +1,7 @@
 # NFL Game Prediction Model
 An ensemble machine learning model that predicts NFL game outcomes using historical team statistics and game data.
 ## Overview
-This project uses an ensemble of four machine learning algorithms (Random Forest, XGBoost, Decision Tree, and Logistic Regression) to predict NFL game winners with approximately 65% accuracy.
+This project uses an ensemble of four machine learning algorithms (Random Forest, XGBoost, Decision Tree, and Logistic Regression) to predict NFL game winners with approximately 65% confidence.
 ## Features
 
 Ensemble Learning: Combines predictions from 4 different models using soft voting
