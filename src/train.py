@@ -51,11 +51,6 @@ def prepare_data(seasons, use_cache=True):
     # Prepare features and target
     feature_cols = get_feature_names()
     
-    # Verify all feature columns exist
-    missing_cols = [col for col in feature_cols if col not in completed_games.columns]
-    if missing_cols:
-        print(f"\nWarning: Missing feature columns: {missing_cols}")
-        feature_cols = [col for col in feature_cols if col in completed_games.columns]
     
     X = completed_games[feature_cols]
     y = completed_games['home_win']

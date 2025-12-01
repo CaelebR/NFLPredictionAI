@@ -53,7 +53,7 @@ def load_team_stats(seasons, use_cache=True):
     # Print columns to debug
     print(f"Available columns: {player_stats.columns.tolist()[:20]}...")
     
-    # Try different possible team column names
+    # Find team column
     team_col = None
     for possible_name in ['recent_team', 'team', 'team_abbr', 'posteam']:
         if possible_name in player_stats.columns:
@@ -65,7 +65,7 @@ def load_team_stats(seasons, use_cache=True):
     
     print(f"Using team column: {team_col}")
     
-    # Aggregate to team level per season
+    # Columns to aggregate
     agg_dict = {
         'passing_yards': 'sum',
         'rushing_yards': 'sum',
@@ -73,36 +73,64 @@ def load_team_stats(seasons, use_cache=True):
         'passing_tds': 'sum',
         'rushing_tds': 'sum',
         'receiving_tds': 'sum',
-        'interceptions': 'sum',
         'completions': 'sum',
         'attempts': 'sum',
-        'carries': 'sum'
+        'carries': 'sum',
     }
-    
-    # Only include columns that exist
+
+    # Fumble and interception columns to aggregate if they exist
+    fumble_cols = ['rushing_fumbles_lost', 'receiving_fumbles_lost', 'sack_fumbles_lost']
+    interception_col = 'passing_interceptions'
+
+    # Add fumble columns to agg_dict if present
+    for col in fumble_cols:
+        if col in player_stats.columns:
+            agg_dict[col] = 'sum'
+    # Add interception column if present
+    if interception_col in player_stats.columns:
+        agg_dict[interception_col] = 'sum'
+
+    # Filter agg_dict for existing columns only
     agg_dict = {k: v for k, v in agg_dict.items() if k in player_stats.columns}
-    
+
     print(f"Aggregating columns: {list(agg_dict.keys())}")
     
+    # Aggregate
     team_stats = player_stats.groupby([team_col, 'season']).agg(agg_dict).reset_index()
     team_stats = team_stats.rename(columns={team_col: 'team'})
-    
-    # Calculate per-game averages
+    print(team_stats.columns.tolist())
+
     games_per_season = 17
     
+    # Calculate per-game stats
     team_stats['passing_yards_pg'] = team_stats.get('passing_yards', 0) / games_per_season
     team_stats['rushing_yards_pg'] = team_stats.get('rushing_yards', 0) / games_per_season
     team_stats['total_yards_pg'] = (team_stats.get('passing_yards', 0) + team_stats.get('rushing_yards', 0)) / games_per_season
     team_stats['points_pg'] = ((team_stats.get('passing_tds', 0) + team_stats.get('rushing_tds', 0) + team_stats.get('receiving_tds', 0)) * 7) / games_per_season
     team_stats['passing_touchdowns_pg'] = team_stats.get('passing_tds', 0) / games_per_season
-    team_stats['fumbles_lost_pg'] = 0  # Calculate if data available
-    team_stats['interceptions_thrown_pg'] = team_stats.get('interceptions', 0) / games_per_season
-    
+
+    # Sum fumble lost columns safely into one combined column
+    team_stats['fumbles_lost'] = 0
+    for col in fumble_cols:
+        if col in team_stats.columns:
+            team_stats['fumbles_lost'] += team_stats[col]
+    team_stats['fumbles_lost_pg'] = team_stats['fumbles_lost'] / games_per_season
+
+    # Interceptions per game
+    team_stats['interceptions_thrown_pg'] = team_stats.get(interception_col, 0) / games_per_season
+
+    # Drop the raw fumble and interception columns so only summary remain
+    cols_to_drop = fumble_cols + [interception_col]
+    existing_cols_to_drop = [col for col in cols_to_drop if col in team_stats.columns]
+    team_stats = team_stats.drop(columns=existing_cols_to_drop + ['fumbles_lost'])
+
     if use_cache:
         team_stats.to_csv(cache_file, index=False)
         print(f"Saved team stats cache → {cache_file}")
 
     return team_stats
+
+
 
 
 def load_data(seasons, use_cache=True):
