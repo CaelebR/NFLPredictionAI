@@ -26,12 +26,9 @@ conda activate nfl_prediction
 Train on multiple seasons for better accuracy:
 bashcd src
 python train.py --seasons 2019 2020 2021 2022 2023 2024
-Training Options:
+### Training Options:
 bash# Use more test data
 python train.py --seasons 2020 2021 2022 2023 --test-size 0.3
-
-Use stacking ensemble instead of voting
-python train.py --seasons 2020 2021 2022 2023 --model-type stacking
 
 Force fresh data download
 python train.py --seasons 2020 2021 2022 2023 --no-cache
